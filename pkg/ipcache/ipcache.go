@@ -254,6 +254,11 @@ func (ipc *IPCache) getK8sMetadata(ip string) *K8sMetadata {
 // given IP. It is optional (may be nil) and is propagated to the listeners.
 // k8sMeta contains Kubernetes-specific metadata such as pod namespace and pod
 // name belonging to the IP (may be nil).
+//
+// When deleting ipcache entries that were previously inserted via this
+// function, ensure that the corresponding delete occurs via Delete().
+//
+// DEPRECATED. Prefer UpsertLabels() or OverrideIdentity() instead.
 func (ipc *IPCache) Upsert(ip string, hostIP net.IP, hostKey uint8, k8sMeta *K8sMetadata, newIdentity Identity) (namedPortsChanged bool, err error) {
 	ipc.mutex.Lock()
 	defer ipc.mutex.Unlock()
@@ -689,6 +694,8 @@ func (ipc *IPCache) DeleteOnMetadataMatch(IP string, source source.Source, names
 }
 
 // Delete removes the provided IP-to-security-identity mapping from the IPCache.
+//
+// DEPRECATED. Prefer RemoveLabels() or RemoveIdentity() instead.
 func (ipc *IPCache) Delete(IP string, source source.Source) (namedPortsChanged bool) {
 	ipc.mutex.Lock()
 	defer ipc.mutex.Unlock()
