@@ -174,7 +174,8 @@ func (n *NodeDiscovery) StartDiscovery() {
 	defer n.localNodeLock.Unlock()
 
 	n.fillLocalNode()
-
+	n.Manager.NodeUpdated(n.localNode)
+	// Ensure local nodeUpdates are completed before we add local node to cluster.
 	go func() {
 		log.WithFields(
 			logrus.Fields{
@@ -199,9 +200,7 @@ func (n *NodeDiscovery) StartDiscovery() {
 		}
 	}()
 
-	n.Manager.NodeUpdated(n.localNode)
 	close(n.LocalStateInitialized)
-
 	n.updateLocalNode()
 }
 

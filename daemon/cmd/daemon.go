@@ -944,6 +944,15 @@ func NewDaemon(ctx context.Context, cancel context.CancelFunc, epMgr *endpointma
 	// Must occur after d.allocateIPs(), see GH-14245 and its fix.
 	d.nodeDiscovery.StartDiscovery()
 
+	// Must be done at least after initializing BPF LB-related maps
+	// (lbmap.Init()).
+	bootstrapStats.bpfBase.Start()
+	err = d.init()
+	bootstrapStats.bpfBase.EndError(err)
+	if err != nil {
+		return nil, restoredEndpoints, fmt.Errorf("error while initializing daemon: %w", err)
+	}
+
 	// Annotation of the k8s node must happen after discovery of the
 	// PodCIDR range and allocation of the health IPs.
 	if k8s.IsEnabled() && option.Config.AnnotateK8sNode {
@@ -992,15 +1001,6 @@ func NewDaemon(ctx context.Context, cancel context.CancelFunc, epMgr *endpointma
 		realIdentityAllocator.InitIdentityAllocator(k8s.CiliumClient(), nil)
 
 		d.bootstrapClusterMesh(nodeMngr)
-	}
-
-	// Must be done at least after initializing BPF LB-related maps
-	// (lbmap.Init()).
-	bootstrapStats.bpfBase.Start()
-	err = d.init()
-	bootstrapStats.bpfBase.EndError(err)
-	if err != nil {
-		return nil, restoredEndpoints, fmt.Errorf("error while initializing daemon: %w", err)
 	}
 
 	// iptables rules can be updated only after d.init() intializes the iptables above.
